@@ -12,11 +12,11 @@ cp standalone/configuration/standalone-full-ha-c.xml standalone/configuration/st
 
 # Monitor the results:
 
-Node1: [http://localhost:9990/console/App.html#activemq-metrics;name=%2524%257Bjboss.node.name%257D]
+[Node1](http://localhost:9990/console/App.html#activemq-metrics;name=%2524%257Bjboss.node.name%257D)
 
-Node2: (http://localhost:10090/console/App.html#activemq-metrics;name=%2524%257Bjboss.node.name%257D)
+[Node2](http://localhost:10090/console/App.html#activemq-metrics;name=%2524%257Bjboss.node.name%257D)
 
-Node3: http://localhost:10190/console/App.html#activemq-metrics;name=%2524%257Bjboss.node.name%257D
+[Node3](http://localhost:10190/console/App.html#activemq-metrics;name=%2524%257Bjboss.node.name%257D)
 
 User: admin:admin
 
