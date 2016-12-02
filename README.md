@@ -30,13 +30,13 @@ mvn clean install wildfly:deploy -Dwildfly.port=10090
 mvn clean install wildfly:deploy -Dwildfly.port=10190
 ```
 
-## EJB
+## [EJB](application/ejb)
 
 ```bash
 cd application/ejb
 mvn clean install wildfly:deploy -Dwildfly.port=9090
 ```
-## Client
+## [Client](application/client)
 
 ```bash
 cd application/client
