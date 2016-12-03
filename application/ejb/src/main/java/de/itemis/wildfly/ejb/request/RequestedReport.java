@@ -30,6 +30,14 @@ public class RequestedReport implements Serializable {
 		this.currentStep = currentStep;
 	}
 
+	public int currentStep() {
+		return currentStep;
+	}
+
+	public String currentMessage() {
+		return currentMessage;
+	}
+
 	public void setCurrentMessage(String currentMessage) {
 		this.currentMessage = currentMessage;
 	}

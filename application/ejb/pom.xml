@@ -94,7 +94,7 @@
                             <port>9990</port>
                         </configuration>
                     </execution>
-                    <execution>
+                    <!-- execution>
                         <id>node2</id>
                         <phase>install</phase>
                         <goals>
@@ -103,7 +103,7 @@
                         <configuration>
                             <port>10090</port>
                         </configuration>
-                    </execution>
+                    </execution-->
                     <!-- execution>
                         <id>node3</id>
                         <phase>install</phase>

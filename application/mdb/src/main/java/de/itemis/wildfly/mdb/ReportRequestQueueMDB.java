@@ -18,7 +18,6 @@ package de.itemis.wildfly.mdb;
 
 import java.util.logging.Logger;
 
-import javax.annotation.Resource;
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.EJB;
 import javax.ejb.MessageDriven;
@@ -31,10 +30,8 @@ import javax.jms.MessageListener;
 import javax.jms.ObjectMessage;
 
 import de.itemis.wildfly.ejb.report.ReportFactory;
-import de.itemis.wildfly.ejb.report.ReportFactoryBean;
+import de.itemis.wildfly.ejb.report.ReportFactoryImpl;
 import de.itemis.wildfly.ejb.request.ReportRequest;
-import de.itemis.wildfly.ejb.request.ReportService;
-import de.itemis.wildfly.ejb.request.RequestedReport;
 
 /**
  * <p>
@@ -50,50 +47,26 @@ public class ReportRequestQueueMDB implements MessageListener {
 
 	private final static Logger LOGGER = Logger.getLogger(ReportRequestQueueMDB.class.toString());
 
-	@Inject
-	private JMSContext context;
 
-	@Resource(lookup = "java:global/ejb/ReportFactoryBean!de.itemis.wildfly.ejb.report.ReportFactory")//"ejb:ejb/ReportFactoryBean!" + ReportFactory.class.getName())
-	private ReportFactory reportFactory;
+//	@Resource(lookup = "java:global/ejb/ReportFactoryBean!de.itemis.wildfly.ejb.report.ReportFactory")//"ejb:ejb/ReportFactoryBean!" + ReportFactory.class.getName())
+	private ReportFactory reportFactory = new ReportFactoryImpl();
+	
+	@EJB
+	private ResponseSenderBean response;
 
 	public void onMessage(final Message in) {
 		try {
+			
 			LOGGER.info("onMessage: " + in);
 			ReportRequest rr = (ReportRequest) ((ObjectMessage) in).getObject();
 			// send back to the *reply to* destination
 			LOGGER.info("factory: " + reportFactory);
 			String reportId = reportFactory.create(in.getJMSCorrelationID(), rr, () -> false,
-					(step, message) -> sendProgress(in, step, message));
-			sendResult(in, reportId);
+					(step, message) -> response.sendProgress(in, step, message));
+			response.sendResult(in, reportId);
 		} catch (JMSException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	private JMSProducer sendResult(Message in, String reportId) {
-		LOGGER.info("sendResult: " + reportId);
-		try {
-			RequestedReport rr = new RequestedReport(in.getJMSCorrelationID());
-			rr.setReportId(reportId);
-			return send(in, rr);
-		} catch (JMSException e) {
-			throw new RuntimeException();
-		}
-	}
-
-	private JMSProducer sendProgress(Message in, int step, String message) {
-		LOGGER.info("sendProgress: " + step + " " + message);
-		try {
-			RequestedReport rr = new RequestedReport(in.getJMSCorrelationID());
-			rr.setCurrentStep(step);
-			rr.setCurrentMessage(message);
-			return send(in, rr);
-		} catch (JMSException e) {
-			throw new RuntimeException();
-		}
-	}
-
-	private JMSProducer send(Message in, RequestedReport rr) throws JMSException {
-		return context.createProducer().setJMSCorrelationID(in.getJMSCorrelationID()).send(in.getJMSReplyTo(), rr);
-	}
 }

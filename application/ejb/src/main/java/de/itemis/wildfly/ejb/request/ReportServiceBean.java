@@ -15,6 +15,7 @@ import javax.jms.ObjectMessage;
 import javax.jms.Queue;
 
 import de.itemis.wildfly.ejb.report.ReportFactory;
+import de.itemis.wildfly.ejb.report.ReportFactoryBean;
 
 @Stateless
 @Remote(ReportService.class)
@@ -35,12 +36,13 @@ public class ReportServiceBean implements ReportService {
 	@Resource(lookup = "java:jboss/exported/jms/queue/reportResponse")
 	private Queue responseQ;
 
-	@EJB(lookup = "java:app/ejb/ReportFactoryBean!de.itemis.wildfly.ejb.report.ReportFactory")
-	private ReportFactory reportFactory;
+	// @EJB(lookup =
+	// "java:app/ejb/ReportFactoryBean!de.itemis.wildfly.ejb.report.ReportFactory")
+	private ReportFactory reportFactory = new ReportFactoryBean();
 
 	@Override
 	public RequestedReport create(ReportRequest rr) {
-		LOGGER.info(rr.toString());
+		LOGGER.info("create: " + rr.toString());
 		final RequestedReport result = new RequestedReport(createId(rr));
 		if (rr.expectedEffort() > 1) {
 			LOGGER.info("creating asynchron");
@@ -70,31 +72,33 @@ public class ReportServiceBean implements ReportService {
 
 	private String createId(ReportRequest rr) {
 		// user username from request and a unique id
-		return "steffen_" + System.nanoTime();
+		return "steffen" + System.nanoTime();
 	}
 
 	@Override
 	public RequestedReport lookup(RequestedReport rr) {
-		LOGGER.info(rr.toString());/*
-									 * InitialContext jndi = new
-									 * InitialContext(); Queue responseQ =
-									 * (Queue) new InitialContext().lookup(
-									 * "java:jboss/exported/jms/queue/" +
-									 * rr.requestId());
-									 */
-		JMSConsumer consumer = context.createConsumer(responseQ, "JMSCorrelationID = '" + rr.requestId() + "'");
-		Message message;
-		while ((message = consumer.receive()) != null) {
-			LOGGER.info("Found message in reponse " + message);
+		LOGGER.info("lookup:" + rr.requestId());
+		/*
+		 * InitialContext jndi = new InitialContext(); Queue responseQ = (Queue)
+		 * new InitialContext().lookup( "java:jboss/exported/jms/queue/" +
+		 * rr.requestId());
+		 */
+		JMSConsumer consumer = context.createConsumer(responseQ);//, "JMSCorrelationID='" + rr.requestId() + "'" );
+		Message currentMessage = null;
+		Message lastMessage = null;
+		while ((currentMessage = consumer.receiveNoWait()) != null) {
+			LOGGER.info("Found message in reponse " + currentMessage);
+			lastMessage = currentMessage;
 		}
-		if (message != null) {
+		if (lastMessage != null) {
+			// send the last message as response
 			try {
-				return (RequestedReport) ((ObjectMessage) message).getObject();
+				return (RequestedReport) ((ObjectMessage) lastMessage).getObject();
 			} catch (JMSException e) {
 				throw new RuntimeException();
 			}
 		}
-		return null;
+		return rr;
 	}
 
 	@Override
